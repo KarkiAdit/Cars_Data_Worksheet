@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Table from "./components/table/table.component";
 import "./App.css";
 
 function Cars() {
@@ -25,7 +26,6 @@ function Cars() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    console.log(carFormData);
     const response = await fetch("http://127.0.0.1:8081/save", {
       method: "POST",
       body: JSON.stringify(carFormData),
@@ -34,7 +34,6 @@ function Cars() {
 
     // Rerender the table data based upon the status code
     const responseJson = await response.json();
-    console.log(responseJson);
     if (responseJson.status === 200) {
       setRefresh(!refresh);
       setCarFormData(carFormInitialData);
@@ -57,14 +56,7 @@ function Cars() {
     }
   };
 
-  /** 🥳🥳🥳🥳🥳🥳 DOUBLE BONUS POINTS 🥳🥳🥳🥳🥳🥳 */
   const handleEdit = async (carId) => {
-    /**
-     * When clicked on a edit button figure out a way to edit the car data.
-     * Once edited send the updated data to NodeJS.
-     * Then use javascript fetch to send DELETE request to NodeJS
-     * https://openjavascript.info/2022/01/03/using-fetch-to-make-get-post-put-and-delete-requests/
-     */
     const response = await fetch("http://localhost:8081/edit", {
       method: "PUT",
       body: JSON.stringify({
@@ -106,6 +98,7 @@ function Cars() {
             value={carFormData.id}
             onChange={handleInputChange}
             required
+            readOnly={`${updateStatus ? true : false}`}
           />
         </label>
         <label>
@@ -150,43 +143,15 @@ function Cars() {
         </label>
         <input type="submit" value={`${updateStatus ? "Update" : "Submit"}`} />
       </form>
-      {/**
-       * TODO: Update the code below to see any new proprties added to carFormData
-       * */}
       <p>
-        ID:{carFormData.id}, name:{carFormData.name}
+        ID: {carFormData.id} &nbsp; Brand: {carFormData.brand} &nbsp; Name:{" "}
+        {carFormData.name}
+        &nbsp; Release Year: {carFormData.releaseYear} &nbsp; Color:{" "}
+        {carFormData.color}
       </p>
 
       <h2>Cars Data</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Brand</th>
-            <th>Name</th>
-            <th>Released Year</th>
-            <th>Color</th>
-            <th>Edit</th>
-            <th>Delete</th>
-          </tr>
-        </thead>
-        <tbody>
-          {cars.map((carData) => {
-            const { id, brand, name, releaseYear, color } = carData;
-            return (
-              <tr key={id + 1}>
-                <td>{id}</td>
-                <td>{brand}</td>
-                <td>{name}</td>
-                <td>{releaseYear}</td>
-                <td>{color}</td>
-                <td onClick={() => handleEdit(carData.id)}>✎</td>
-                <td onClick={() => handleDelete(carData.id)}>🗑</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <Table cars={cars} handleDelete={handleDelete} handleEdit={handleEdit} />
     </div>
   );
 }
