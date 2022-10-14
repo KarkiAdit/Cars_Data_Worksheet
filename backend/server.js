@@ -1,151 +1,119 @@
-/** Reference code: https://github.com/bpeddapudi/nodejs-basics-routes/blob/master/server.js
- * import express */
 const express = require("express");
 const cors = require("cors");
+
 const app = express();
-const bodyParser = require("body-parser");
-const _ = require("lodash");
+
+app.use(express.json());
+app.use(cors());
 
 let carsMockData = [
   {
-    id: "1",
+    id: 1,
     brand: "Hyundai",
     name: "Ioniq",
-    releaseYear: 2017,
+    releaseYear: "2017",
     color: "blue",
   },
   {
-    id: "2",
+    id: 2,
     brand: "Toyota",
     name: "Prius",
-    releaseYear: 2007,
+    releaseYear: "2007",
     color: "blue",
   },
   {
-    id: "3",
+    id: 3,
     brand: "Chevrolet",
     name: "Aveo",
-    releaseYear: 2007,
+    releaseYear: "2007",
     color: "white",
   },
   {
-    id: "4",
+    id: 4,
     brand: "BMW",
     name: "M5",
-    releaseYear: 2017,
+    releaseYear: "2017",
     color: "White",
   },
   {
-    id: "5",
+    id: 5,
     brand: "Tesla",
     name: "S",
-    releaseYear: 2019,
+    releaseYear: "2019",
     color: "Black",
   },
 ];
 
-// TO SUPPORT CORS.
-app.use(cors());
-app.use(
-  bodyParser.urlencoded({
-    extended: true,
-  })
-);
-
-/**bodyParser.json(options)
- * Parses the text as JSON and exposes the resulting object on req.body.
- */
-app.use(bodyParser.json());
-
-/** Create GET API. API shoudl return  const carsMockData*/
-app.get("/", function (request, response) {
-  response.send(`<h1 style="text-align:center">Cars Data</h1>`);
-});
-
-app.get("/cars-data", function (request, response) {
-  response.send(carsMockData);
-});
-
-const server = app.listen(8081, function () {
-  console.log(`App listening at http://127.0.0.1:8081/`);
-});
-
-// REST API to save car data to carsMockData
-app.post("/save", (request, response) => {
-  const carDataToAdd = request.body;
-  let returnResponse = {};
-
-  // Check if item already in the carsMockData
-  carsMockData.map((car, indx) => {
-    if (car.id === carDataToAdd.id) {
-      // check if data already is in the carsMockData
-      if (_.isEqual(car, carDataToAdd)) {
-        returnResponse = { status: 500, message: "Car already exists" };
-      } else {
-        // Update existing carData
-        carsMockData[indx] = carDataToAdd;
-        returnResponse = {
-          status: 200,
-          message: "car updated",
-          response: carsMockData,
-        };
-      }
-    }
-  });
-
-  if (!carsMockData.some((carData) => carData.id === carDataToAdd.id)) {
-    // Add car to the carsMockData
-    carsMockData.push(carDataToAdd);
-    returnResponse = {
+app.get("/cars", (req, res) => {
+  if (carsMockData) {
+    res.status(200).json({
       status: 200,
-      message: "car added",
-      response: carsMockData,
-    };
-  }
-
-  response.json(returnResponse);
-});
-
-// REST API to edit car data in carsMockData
-app.put("/edit", (request, response) => {
-  const carIdToEdit = request.body.id;
-  let returnResponse = {
-    status: 500,
-    message: "No car data found to be updated!",
-  };
-  const carToEdit = carsMockData.filter(
-    (cardData) => cardData.id === carIdToEdit
-  );
-
-  if (carToEdit) {
-    returnResponse = {
-      status: 200,
-      response: carToEdit,
-    };
-  }
-
-  response.json(returnResponse);
-});
-
-// REST API to delete car data from carsMockData
-app.delete("/delete", (request, response) => {
-  const carIdToDelete = request.body.id;
-  let returnResponse = {};
-  const initialLenght = carsMockData.length;
-
-  //   Remove the car from carsMockData if the id matches
-  carsMockData = carsMockData.filter((carData) => carData.id !== carIdToDelete);
-
-  if (carsMockData.length === initialLenght) {
-    // check if item was deleted or not
-    returnResponse = { status: 500, message: "No car with given id exists" };
+      data: carsMockData,
+    });
   } else {
-    returnResponse = {
-      status: 200,
-      message: "item deleted",
-      response: carsMockData,
-    };
+    res.status(400).json({
+      status: 400,
+      message: "Mock database is currently empty",
+    });
   }
+});
 
-  response.json(returnResponse);
+app.post("/cars", (req, res) => {
+  const matchingCars = carsMockData.filter((car) => car.id === req.body.id);
+  if (matchingCars.length) {
+    res.status(500).json({
+      status: 500,
+      message: "Car already exists",
+    });
+  } else {
+    newCarData = req.body;
+    carsMockData.push(newCarData);
+    res.status(200).json({
+      status: 200,
+      data: carsMockData,
+    });
+  }
+});
+
+app.put("/cars", (req, res) => {
+  const matchingCar = carsMockData.filter((car) => car.id === req.body.id);
+  if (matchingCar) {
+    carsMockData = carsMockData.map((currentCarData) => {
+      if (currentCarData.id === req.body.id) {
+        return req.body;
+      } else {
+        return currentCarData;
+      }
+    });
+    res.status(200).json({
+      status: 200,
+      data: carsMockData,
+    });
+  } else {
+    res.status(500).json({
+      status: 500,
+      message: "No car with given id exists",
+    });
+  }
+});
+
+app.delete("/cars", (req, res) => {
+  const carIdToDelete = req.body.id;
+  newCarsData = carsMockData.filter((carData) => carData.id !== carIdToDelete);
+  if (carsMockData.length === newCarsData.length) {
+    res
+      .status(500)
+      .json({ status: 500, message: "No car with given id exists" });
+  } else {
+    carsMockData = newCarsData;
+    res.status(200).json({
+      status: 200,
+      message: "Item successfully deleted",
+      data: carsMockData,
+    });
+  }
+});
+
+app.listen(8081, function () {
+  console.log("Server is listening at http://127.0.0.1:8081");
 });
